@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* AlgoCommit Custom Styles */
+body {
+  margin: 0;
+  padding: 0;
+  width: 400px;
+  min-height: 500px;
+  background-color: #0f172a; /* slate-900 */
+  color: #f8fafc; /* slate-50 */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}

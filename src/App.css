@@ -1,0 +1,27 @@
+/* Settings / Dropdown slide-down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: top right;
+}
+
+/* Shimmer effect for syncing stat values */
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.shimmer-value {
+  animation: shimmer 1.2s ease-in-out infinite;
+}

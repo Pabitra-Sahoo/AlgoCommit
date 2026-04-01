@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "AlgoCommit: Auto-Sync DSA Solutions",
+  "version": "1.2.0",
+  "description": "Automatically sync your LeetCode, GeeksForGeeks, & Codeforces solutions to GitHub with streak tracking and difficulty stats.",
+  "icons": {
+    "16": "Myicon.png",
+    "48": "Myicon.png",
+    "128": "Myicon.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "Myicon.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "webRequest",
+    "identity",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://*.geeksforgeeks.org/*",
+    "https://codeforces.com/*",
+    "https://*.codeforces.com/*",
+    "https://api.github.com/*",
+    "https://github.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/problems/*"
+      ],
+      "js": [
+        "content-leetcode.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.geeksforgeeks.org/problems/*"
+      ],
+      "js": [
+        "content-gfg.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*"
+      ],
+      "js": [
+        "content-codeforces.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
