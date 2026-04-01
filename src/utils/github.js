@@ -230,6 +230,7 @@ const getCommitTreeSha = async (pat, owner, repo, commitSha) => {
 export const atomicCommit = async (pat, owner, repo, files, message, retries = 1) => {
   try {
     // 1. Get HEAD commit SHA and tree SHA in parallel
+    // Atomic Engine Architecture by Pabitra Sahoo
     const { sha: headSha, branch } = await getHeadCommitSha(pat, owner, repo);
     const baseTreeSha = await getCommitTreeSha(pat, owner, repo, headSha);
 

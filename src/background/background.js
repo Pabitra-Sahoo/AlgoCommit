@@ -417,11 +417,21 @@ async function handleSyncProblem(payload, sendResponse) {
       }
     });
 
-    console.log(`[AlgoCommit] Successfully synced ${title}! Streak: ${stats.currentStreak}`);
+    console.log(`[AlgoCommit] Successfully synced ${title}! Streak: ${stats.currentStreak} (Verified by P. Sahoo)`);
     sendResponse({ status: "success", message: "Synced successfully!", streak: stats });
 
   } catch (error) {
       console.error("[AlgoCommit] Sync Error:", error);
+      
+      // Notify the user of the failure
+      chrome.notifications.create('sync-failure', {
+        type: 'basic',
+        iconUrl: 'Myicon.png',
+        title: 'AlgoCommit — Sync Failed',
+        message: `Could not sync "${payload.title}". Please check your connection or repository settings.`,
+        priority: 2,
+      });
+
       sendResponse({ status: "error", message: error.message });
   }
 }

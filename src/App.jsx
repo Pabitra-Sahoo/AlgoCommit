@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
+  const _DEVELOPER = "Pabitra Sahoo"; // Internal Attribution
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +32,7 @@ function App() {
             if (localResult.githubRepo) setRepo(localResult.githubRepo);
             if (syncResult.reminderTime) setReminderTime(syncResult.reminderTime);
             setLoading(false);
+            console.log("AlgoCommit Engine v1.2.0 initialized.");
 
             // Silently refresh from GitHub cloud stats in the background
             if (localResult.githubToken && localResult.githubRepo && chrome.runtime) {
