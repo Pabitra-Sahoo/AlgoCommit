@@ -1,0 +1,67 @@
+name: 🐞 Bug Report
+description: Report something that isn’t working as expected
+title: "Bug: "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in AlgoCommit 🚀  
+        Please fill this out so we can fix it quickly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 🧩 What happened?
+      placeholder: Tell us what went wrong...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔁 Steps to reproduce
+      placeholder: |
+        1. Go to...
+        2. Click...
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ What did you expect?
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: ⚡ Priority
+      options:
+        - 🔴 High (blocking / critical)
+        - 🟠 Medium (affects usage)
+        - 🟢 Low (minor issue)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: 🌐 Browser
+      placeholder: e.g. Chrome, Safari
+
+  - type: input
+    id: device
+    attributes:
+      label: 💻 Device
+      placeholder: e.g. MacBook, Windows, Mobile
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 📝 Additional context
+      placeholder: Logs, screenshots, anything helpful
