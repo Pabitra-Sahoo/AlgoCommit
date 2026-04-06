@@ -389,14 +389,20 @@ function App() {
 
       {/* Top Navbar */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-[#141218]/80 backdrop-blur-md border-b border-[#49454F]/20 z-50 flex items-center justify-between px-5 shadow-sm">
-        <div className="flex items-center space-x-3">
-          <div className="w-[32px] h-[32px] flex items-center justify-center">
+        <a 
+          href="https://algocommit.netlify.app/" 
+          target="_blank" 
+          rel="noreferrer" 
+          className="flex items-center space-x-3 group cursor-pointer no-underline"
+          title="Visit our Website"
+        >
+          <div className="w-[32px] h-[32px] flex items-center justify-center transition-transform group-hover:scale-110 active:scale-95">
             <img src="/Myicon.png" alt="AlgoCommit Logo" className="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
           </div>
-          <h1 className="text-[18px] font-bold tracking-tight text-[#E6E1E5]">
+          <h1 className="text-[18px] font-bold tracking-tight text-[#E6E1E5] group-hover:text-[#D0BCFF] transition-colors">
             AlgoCommit
           </h1>
-        </div>
+        </a>
         
         {isFullyConfigured && (
           <div className="flex items-center gap-1.5">
