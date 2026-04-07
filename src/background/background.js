@@ -112,8 +112,15 @@ function computeEffectiveStreak(stats) {
 // ── OAuth Configuration ──────────────────────────────────────────────────────
 // IMPORTANT: Replace these with your actual values after setup.
 // CLIENT_ID is safe to be public. The secret stays on Vercel.
-const GITHUB_CLIENT_ID = 'Ov23liQTtfXURSJJ2hU9';
-const TOKEN_EXCHANGE_URL = 'https://algocommit-auth.vercel.app/api/exchange';
+
+//Edge Build
+// const GITHUB_CLIENT_ID = 'Ov23liQTtfXURSJJ2hU9';
+// const TOKEN_EXCHANGE_URL = 'https://algocommit-auth.vercel.app/api/exchange';
+
+
+//Chrome Build
+const GITHUB_CLIENT_ID = 'Ov23liJoUcvLRPsMw1np';
+const TOKEN_EXCHANGE_URL = 'https://algocommit-auth-chrome.vercel.app/api/exchange';
 
 // Listener for messages from content scripts and popup UI
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
