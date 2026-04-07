@@ -1,13 +1,15 @@
 {
   "name": "solve-sync",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:edge": "set NODE_ENV=edge && vite build",
+    "build:chrome": "set NODE_ENV=chrome && vite build"
   },
   "dependencies": {
     "react": "^19.2.4",

@@ -29,7 +29,7 @@ async function extractCodeFromEditor() {
         if (aceLayer) {
             code = Array.from(aceLayer.querySelectorAll('.ace_line'))
                         .map(line => line.innerText)
-                        .join('\\n');
+                        .join('\n');
             if (code && code.trim().length > 0) return code;
         }
 

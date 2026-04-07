@@ -32,7 +32,7 @@ function App() {
             if (localResult.githubRepo) setRepo(localResult.githubRepo);
             if (syncResult.reminderTime) setReminderTime(syncResult.reminderTime);
             setLoading(false);
-            console.log("AlgoCommit Engine v1.2.0 initialized.");
+            console.log("AlgoCommit Engine v1.3.0 initialized.");
 
             // Silently refresh from GitHub cloud stats in the background
             if (localResult.githubToken && localResult.githubRepo && chrome.runtime) {
@@ -62,6 +62,30 @@ function App() {
           });
         }
       );
+
+      // ── Live UI Update Fix ────────────────────────────────────────────────────
+      // Re-read storage whenever the background script updates it after a sync.
+      // This makes the popup reflect new stats instantly without reopening.
+      const handleStorageChange = (changes, area) => {
+        if (area !== 'local') return;
+        const relevantKeys = ['syncedProblems', 'difficultyCounts', 'activityHistory', 'todayProblems'];
+        const hasRelevantChange = relevantKeys.some(key => key in changes);
+        if (!hasRelevantChange) return;
+
+        chrome.storage.local.get(
+          ["githubToken", "githubUsername", "githubRepo", "syncedProblems", "difficultyCounts", "activityHistory", "todayProblems"],
+          (localResult) => {
+            chrome.storage.sync.get(["streak", "reminderTime"], (syncResult) => {
+              setConfig(prev => ({ ...prev, ...localResult, ...syncResult }));
+              setLastSyncedAt(new Date());
+            });
+          }
+        );
+      };
+
+      chrome.storage.onChanged.addListener(handleStorageChange);
+      return () => chrome.storage.onChanged.removeListener(handleStorageChange);
+      // ─────────────────────────────────────────────────────────────────────────
     } else {
       // Mock for local dev
       setLoading(false);
