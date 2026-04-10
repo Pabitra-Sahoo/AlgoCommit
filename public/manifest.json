@@ -14,7 +14,6 @@
   },
   "permissions": [
     "storage",
-    "tabs",
     "webRequest",
     "identity",
     "alarms",
@@ -25,8 +24,7 @@
     "https://*.geeksforgeeks.org/*",
     "https://codeforces.com/*",
     "https://*.codeforces.com/*",
-    "https://api.github.com/*",
-    "https://github.com/*"
+    "https://api.github.com/*"
   ],
   "background": {
     "service_worker": "background.js",
