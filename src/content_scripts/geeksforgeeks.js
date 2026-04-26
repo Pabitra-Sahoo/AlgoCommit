@@ -4,11 +4,43 @@ console.log("AlgoCommit: GeeksForGeeks content script loaded.");
 
 let isExtracting = false;
 
+// Function to extract code via scout injection (bypasses DOM virtualization)
+function extractCodeViaScout() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('gfg-scout.js');
+    
+    const listener = (event) => {
+      if (event.source !== window || !event.data || event.data.type !== 'ALGOC_GFG_CODE') return;
+      window.removeEventListener('message', listener);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(event.data.code);
+    };
+    
+    window.addEventListener('message', listener);
+    (document.head || document.documentElement).appendChild(script);
+    
+    // Timeout fallback (1.5 seconds)
+    setTimeout(() => {
+      window.removeEventListener('message', listener);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(null);
+    }, 1500);
+  });
+}
+
 // Function to read code directly from the DOM without executing inline scripts
 async function extractCodeFromEditor() {
     try {
-        let code = "";
-        
+        // Primary Method: Scout Injection (Accurate, gets full code)
+        let code = await extractCodeViaScout();
+        if (code && code.trim().length > 0) {
+            console.log("AlgoCommit: Code extracted via Scout.");
+            return code;
+        }
+
+        console.log("AlgoCommit: Scout failed or empty, falling back to DOM scraping...");
+
         // Method 1: Check if the text is available in plain DOM element (Modern GfG)
         const viewLines = document.querySelector('.view-lines');
         if (viewLines) {
@@ -40,9 +72,6 @@ async function extractCodeFromEditor() {
             if (code && code.trim().length > 0) return code;
         }
 
-        // If nothing works, we'll try evaluating a small script through the background 
-        // using chrome.scripting to grab from window.ace / window.monaco but for now
-        // we'll just return raw text from the code container if possible
         const genericCodeContainer = document.querySelector('.brxe-code') || document.querySelector('code');
         if (genericCodeContainer) {
              return genericCodeContainer.innerText;

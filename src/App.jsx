@@ -682,7 +682,6 @@ function App() {
                     </>
                   )}
                 </button>
-                <p className="text-[11px] text-[#938F99] text-center">Opens GitHub in a popup — no token needed</p>
               </div>
             ) : (
               <form onSubmit={handlePatLogin} className="space-y-5">

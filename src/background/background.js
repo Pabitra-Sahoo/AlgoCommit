@@ -114,13 +114,13 @@ function computeEffectiveStreak(stats) {
 // CLIENT_ID is safe to be public. The secret stays on Vercel.
 
 //Edge Build
-// const GITHUB_CLIENT_ID = 'Ov23liQTtfXURSJJ2hU9';
-// const TOKEN_EXCHANGE_URL = 'https://algocommit-auth.vercel.app/api/exchange';
+const GITHUB_CLIENT_ID = 'Ov23liQTtfXURSJJ2hU9';
+const TOKEN_EXCHANGE_URL = 'https://algocommit-auth.vercel.app/api/exchange';
 
 
 //Chrome Build
-const GITHUB_CLIENT_ID = 'Ov23liJoUcvLRPsMw1np';
-const TOKEN_EXCHANGE_URL = 'https://algocommit-auth-chrome.vercel.app/api/exchange';
+// const GITHUB_CLIENT_ID = 'Ov23liJoUcvLRPsMw1np';
+// const TOKEN_EXCHANGE_URL = 'https://algocommit-auth-chrome.vercel.app/api/exchange';
 
 // Listener for messages from content scripts and popup UI
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -149,57 +149,68 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // GitHub OAuth — opens popup, exchanges code for token via Vercel
 async function handleGitHubOAuth(sendResponse) {
-  const redirectUri = chrome.identity.getRedirectURL();
-  console.log('[AlgoCommit] OAuth redirect URI:', redirectUri);
+  try {
+    const redirectUri = chrome.identity.getRedirectURL();
+    console.log('[AlgoCommit] OAuth redirect URI:', redirectUri);
 
-  const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo`;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo`;
 
-  chrome.identity.launchWebAuthFlow(
-    { url: authUrl, interactive: true },
-    async (redirectUrl) => {
-      if (chrome.runtime.lastError || !redirectUrl) {
-        return sendResponse({
-          status: 'error',
-          message: chrome.runtime.lastError?.message || 'Authentication cancelled or failed'
-        });
-      }
-
-      // Extract the code from the redirect URL
-      const code = new URL(redirectUrl).searchParams.get('code');
-      if (!code) {
-        return sendResponse({ status: 'error', message: 'No authorization code returned.' });
-      }
-
-      try {
-        // Exchange code for token via Vercel serverless function
-        const tokenRes = await fetch(TOKEN_EXCHANGE_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code })
-        });
-
-        const tokenData = await tokenRes.json();
-        if (!tokenData.access_token) {
-          return sendResponse({ status: 'error', message: tokenData.error_description || 'Failed to obtain access token.' });
+    // Wrap the callback-based API in a Promise so we can await it
+    const redirectUrl = await new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow(
+        { url: authUrl, interactive: true },
+        (url) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message || 'Authentication cancelled or failed'));
+          } else if (!url) {
+            reject(new Error('Authentication failed: No redirect URL returned.'));
+          } else {
+            resolve(url);
+          }
         }
+      );
+    });
 
-        // Fetch GitHub username
-        const userRes = await fetch('https://api.github.com/user', {
-          headers: { Authorization: `token ${tokenData.access_token}` }
-        });
-        const userData = await userRes.json();
-
-        await chrome.storage.local.set({
-          githubToken: tokenData.access_token,
-          githubUsername: userData.login
-        });
-
-        sendResponse({ status: 'success', username: userData.login });
-      } catch (e) {
-        sendResponse({ status: 'error', message: e.message });
-      }
+    // Extract the code from the redirect URL
+    const code = new URL(redirectUrl).searchParams.get('code');
+    if (!code) {
+      throw new Error('No authorization code returned.');
     }
-  );
+
+    // Exchange code for token via Vercel serverless function
+    const tokenRes = await fetch(TOKEN_EXCHANGE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      throw new Error(tokenData.error_description || 'Failed to obtain access token.');
+    }
+
+    // Fetch GitHub username
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `token ${tokenData.access_token}` }
+    });
+
+    if (!userRes.ok) {
+      throw new Error('Failed to fetch user data from GitHub.');
+    }
+
+    const userData = await userRes.json();
+
+    await chrome.storage.local.set({
+      githubToken: tokenData.access_token,
+      githubUsername: userData.login
+    });
+
+    sendResponse({ status: 'success', username: userData.login });
+  } catch (e) {
+    console.error('[AlgoCommit] OAuth Error:', e);
+    // This absolutely guarantees the error makes it back to the UI popup!
+    sendResponse({ status: 'error', message: e.message });
+  }
 }
 
 // Popup requests fresh stats from GitHub to hydrate the dashboard
@@ -230,11 +241,13 @@ async function handleFetchCloudStats(sendResponse) {
         }
       });
       // Return stats with effective (decayed) streak values for display
-      sendResponse({ status: "success", stats: {
-        ...stats,
-        currentStreak: effective.currentStreak,
-        todayCount: effective.todayCount
-      }});
+      sendResponse({
+        status: "success", stats: {
+          ...stats,
+          currentStreak: effective.currentStreak,
+          todayCount: effective.todayCount
+        }
+      });
     } else {
       sendResponse({ status: "empty", message: "No stats.json found on GitHub yet." });
     }
@@ -282,16 +295,16 @@ async function handleSyncProblem(payload, sendResponse) {
 
     // Get configuration
     const config = await getStorageValues(["githubToken", "githubRepo", "githubUsername", "syncedProblems"]);
-    
+
     if (!config.githubToken || !config.githubRepo) {
-        return sendResponse({ status: "error", message: "GitHub not configured. Please setup AlgoCommit." });
+      return sendResponse({ status: "error", message: "GitHub not configured. Please setup AlgoCommit." });
     }
 
     // Check if already synced
     const syncedProblems = normalizeSyncedProblems(config.syncedProblems);
     if (problemId in syncedProblems) {
-        console.log(`[AlgoCommit] Problem already synced: ${title}`);
-        return sendResponse({ status: "success", message: "Already synced." });
+      console.log(`[AlgoCommit] Problem already synced: ${title}`);
+      return sendResponse({ status: "success", message: "Already synced." });
     }
 
     // ── Cloud-first stats update ──────────────────────────────────────────────
@@ -327,12 +340,12 @@ async function handleSyncProblem(payload, sendResponse) {
 
     // Milestone celebrations
     const MILESTONES = [
-      { n: 500, rank: 'Tech Lead',   emoji: '🟣' },
+      { n: 500, rank: 'Tech Lead', emoji: '🟣' },
       { n: 250, rank: 'Sr Developer', emoji: '🔵' },
-      { n: 100, rank: 'Developer',   emoji: '🔵' },
-      { n:  50, rank: 'Jr Developer', emoji: '🟢' },
-      { n:  25, rank: 'Intern',       emoji: '⚪' },
-      { n:  10, rank: 'Learner',      emoji: '⚪' },
+      { n: 100, rank: 'Developer', emoji: '🔵' },
+      { n: 50, rank: 'Jr Developer', emoji: '🟢' },
+      { n: 25, rank: 'Intern', emoji: '⚪' },
+      { n: 10, rank: 'Learner', emoji: '⚪' },
     ];
     const hit = MILESTONES.find(m => prevTotal < m.n && stats.totalSolved >= m.n);
     if (hit) {
@@ -400,9 +413,9 @@ async function handleSyncProblem(payload, sendResponse) {
       config.githubUsername,
       config.githubRepo,
       [
-        { path: `${basePath}/README.md`,          content: readmeContent },
+        { path: `${basePath}/README.md`, content: readmeContent },
         { path: `${basePath}/solution${fileExtension}`, content: code },
-        { path: 'stats.json',                     content: JSON.stringify(stats, null, 2) },
+        { path: 'stats.json', content: JSON.stringify(stats, null, 2) },
         ...(newReadmeContent ? [{ path: 'README.md', content: newReadmeContent }] : []),
       ],
       `[AlgoCommit] ${platform}/${difficulty}/${title}`
@@ -428,18 +441,18 @@ async function handleSyncProblem(payload, sendResponse) {
     sendResponse({ status: "success", message: "Synced successfully!", streak: stats });
 
   } catch (error) {
-      console.error("[AlgoCommit] Sync Error:", error);
-      
-      // Notify the user of the failure
-      chrome.notifications.create('sync-failure', {
-        type: 'basic',
-        iconUrl: 'Myicon.png',
-        title: 'AlgoCommit — Sync Failed',
-        message: `Could not sync "${payload.title}". Please check your connection or repository settings.`,
-        priority: 2,
-      });
+    console.error("[AlgoCommit] Sync Error:", error);
 
-      sendResponse({ status: "error", message: error.message });
+    // Notify the user of the failure
+    chrome.notifications.create('sync-failure', {
+      type: 'basic',
+      iconUrl: 'Myicon.png',
+      title: 'AlgoCommit — Sync Failed',
+      message: `Could not sync "${payload.title}". Please check your connection or repository settings.`,
+      priority: 2,
+    });
+
+    sendResponse({ status: "error", message: error.message });
   }
 }
 
@@ -480,22 +493,22 @@ async function buildRootReadmeContent(config, title, url, platform, difficulty, 
 }
 
 function getFileExtension(language) {
-    if (!language) return '.txt'; // Guard against null/undefined language
-    const map = {
-        'python': '.py',
-        'python3': '.py',
-        'java': '.java',
-        'cpp': '.cpp',
-        'c++': '.cpp',
-        'c': '.c',
-        'javascript': '.js',
-        'js': '.js',
-        'typescript': '.ts',
-        'go': '.go',
-        'rust': '.rs',
-        'ruby': '.rb'
-    };
-    return map[language.toLowerCase()] || '.txt';
+  if (!language) return '.txt'; // Guard against null/undefined language
+  const map = {
+    'python': '.py',
+    'python3': '.py',
+    'java': '.java',
+    'cpp': '.cpp',
+    'c++': '.cpp',
+    'c': '.c',
+    'javascript': '.js',
+    'js': '.js',
+    'typescript': '.ts',
+    'go': '.go',
+    'rust': '.rs',
+    'ruby': '.rb'
+  };
+  return map[language.toLowerCase()] || '.txt';
 }
 
 // Listen for submit requests to LeetCode
@@ -509,9 +522,9 @@ chrome.webRequest.onCompleted.addListener(
     ) {
       const match = details.url.match(/\/problems\/(.*?)\/submit/);
       const questionSlug = match ? match[1] : null;
-      
+
       if (!questionSlug) return;
-      
+
       // Wait 3 seconds to ensure LeetCode backend processes the submission
       setTimeout(() => {
         chrome.tabs.sendMessage(details.tabId, { type: 'GET_LEETCODE_SUBMISSION', questionSlug });

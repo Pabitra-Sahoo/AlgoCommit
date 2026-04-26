@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AlgoCommit: Auto-Sync DSA Solutions",
-  "version": "1.3.0",
+  "version": "1.3.3",
   "description": "Automatically sync your LeetCode, GeeksForGeeks, & Codeforces solutions to GitHub with streak tracking and difficulty stats.",
   "icons": {
     "16": "Myicon.png",
@@ -58,6 +58,16 @@
         "content-codeforces.js"
       ],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "gfg-scout.js"
+      ],
+      "matches": [
+        "https://*.geeksforgeeks.org/*"
+      ]
     }
   ]
 }
